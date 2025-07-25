@@ -38,15 +38,17 @@ TOKEN_MINTS = {
 
 JUPITER_API_URL = "https://quote-api.jup.ag/v6/quote"
 
-async def get_price(session, token_in, token_out, amount=1_000_000):
+async def get_price(session, token_in, token_out, platform=None):
     if token_out not in TOKEN_MINTS or token_in not in TOKEN_MINTS:
-    return None
- params = {
+        return None  # ✅ Ce bloc est indenté correctement
+
+    params = {
         "inputMint": TOKEN_MINTS[token_in],
         "outputMint": TOKEN_MINTS[token_out],
-        "amount": amount,
+        "amount": 1_000_000,
         "slippageBps": 10
     }
+    ...
     async with session.get(JUPITER_API_URL, params=params) as resp:
         if resp.status == 200:
             data = await resp.json()
