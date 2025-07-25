@@ -3,7 +3,12 @@ import streamlit as st
 import asyncio
 import aiohttp
 import pandas as pd
+# --- Protection par mot de passe ---
+mot_de_passe = st.text_input("🔐 Entrez le mot de passe :", type="password")
 
+if mot_de_passe != "NolaRaya":  # <-- Mets ici le mot de passe que tu veux
+    st.warning("Accès refusé.")
+    st.stop()
 STABLE_PAIRS = [
     ("USDC", "USDT"),
     ("USDC", "DAI"),
