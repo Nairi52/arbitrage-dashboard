@@ -75,6 +75,23 @@ def main():
         df = df.sort_values("Spread Max (%)", ascending=False)
         placeholder.dataframe(df, use_container_width=True)
         asyncio.run(asyncio.sleep(refresh_rate))
+        # Récupère les prix sur toutes les plateformes pour chaque paire
+async def fetch_all():
+    results = []
+    async with aiohttp.ClientSession() as session:
+        for i, base in enumerate(STABLECOINS):
+            for quote in STABLECOINS[i+1:]:
+                row = {"Paire": f"{base}/{quote}"}
+                for plat in PLATFORMS:
+                    price = await get_price(session, base, quote, plat)
+                    row[plat] = price
+                prices = [v for k, v in row.items() if k in PLATFORMS and isinstance(v, float)]
+                if len(prices) >= 2:
+                    spread = (max(prices) - min(prices)) / min(prices) * 100
+                    row["Spread Max (%)"] = round(spread, 4)
+                    row["💸 Arbitrage"] = "✅" if spread >= 0.2 else ""
+                results.append(row)
+    return results
 
 if st.button("🔄 Actualiser les prix"):
     with st.spinner("Chargement des données..."):
