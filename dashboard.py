@@ -65,9 +65,19 @@ def main():
     st.title("💹 Dashboard d'Arbitrage Stablecoins - Solana (via Jupiter)")
 
     refresh_rate = st.slider("⏱️ Rafraîchissement (secondes)", 5, 60, 10)
-
     placeholder = st.empty()
 
+    while True:
+        data = asyncio.run(fetch_arbitrage_data())
+        df = pd.DataFrame(data)
+
+        if not df.empty and "Spread (%)" in df.columns:
+            df = df.sort_values("Spread (%)", ascending=False)
+            placeholder.dataframe(df, use_container_width=True)
+        else:
+            placeholder.warning("❌ Aucune donnée à afficher pour le moment.")
+
+        asyncio.run(asyncio.sleep(refresh_rate))
     while True:
         data = asyncio.run(fetch_arbitrage_data())
         df = pd.DataFrame(data)
