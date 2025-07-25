@@ -87,7 +87,7 @@ def main():
 
 # ---------- PASSWORD ----------
 mot_de_passe = st.text_input("🔐 Entrez le mot de passe :", type="password")
-if mot_de_passe != "rayan123":
+if mot_de_passe != "NolaRaya":
     st.warning("⛔ Accès refusé.")
     st.stop()
 else:
