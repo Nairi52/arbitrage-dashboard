@@ -5,7 +5,7 @@ import pandas as pd
 
 # 🔐 MOT DE PASSE - À placer tout en haut !
 mot_de_passe = st.text_input("🔐 Entrez le mot de passe :", type="password")
-if mot_de_passe != "rayan123":  # 🔁 tu peux changer "rayan123" par ton vrai mot de passe
+if mot_de_passe != "NolaRaya":  # 🔁 tu peux changer "rayan123" par ton vrai mot de passe
     st.warning("⛔ Accès refusé.")
     st.stop()
 STABLE_PAIRS = [
