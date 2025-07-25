@@ -123,12 +123,19 @@ async def fetch_all():
                 results.append(row)
     return results
 
+# Curseur pour filtrer par spread minimum
+min_spread = st.slider("📊 Spread minimum affiché (%)", 0.01, 2.0, 0.2)
+
+# Bouton d’actualisation
 if st.button("🔄 Actualiser les prix"):
     with st.spinner("Chargement des données..."):
-        data = asyncio.run(fetch_all())
+        data = asyncio.run(fetch_all(min_spread))
         df = pd.DataFrame(data)
 
         if not df.empty and "Spread Max (%)" in df.columns:
             df = df.sort_values("Spread Max (%)", ascending=False)
 
+        st.dataframe(df, use_container_width=True)
+else:
+    st.info("Clique sur le bouton pour scanner les plateformes.")
         st.dataframe(df, use_container_width=True)
