@@ -38,17 +38,32 @@ TOKEN_MINTS = {
 
 JUPITER_API_URL = "https://quote-api.jup.ag/v6/quote"
 
-async def get_price(session, token_in, token_out, platform=None):
-    if token_out not in TOKEN_MINTS or token_in not in TOKEN_MINTS:
-        return None  # ✅ Ce bloc est indenté correctement
+async def get_price(session, input_token, output_token, platform=None):
+    if input_token not in TOKEN_MINTS or output_token not in TOKEN_MINTS:
+        return None
 
     params = {
-        "inputMint": TOKEN_MINTS[token_in],
-        "outputMint": TOKEN_MINTS[token_out],
+        "inputMint": TOKEN_MINTS[input_token],
+        "outputMint": TOKEN_MINTS[output_token],
         "amount": 1_000_000,
         "slippageBps": 10
     }
-    ...
+
+    if platform and platform != "Jupiter":
+        params["onlyDirectRoutes"] = False  # ✅ accepte les routes indirectes (multi-hops)
+        params["platforms"] = platform.lower()  # raydium, orca, etc.
+
+    try:
+        async with session.get(JUPITER_API, params=params) as resp:
+            if resp.status == 200:
+                data = await resp.json()
+                if "data" in data and len(data["data"]) > 0:
+                    out_amount = int(data["data"][0]["outAmount"])
+                    return round(out_amount / 1_000_000, 6)
+    except:
+        pass
+
+    return None
     async with session.get(JUPITER_API_URL, params=params) as resp:
         if resp.status == 200:
             data = await resp.json()
