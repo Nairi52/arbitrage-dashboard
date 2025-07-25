@@ -76,5 +76,12 @@ def main():
         placeholder.dataframe(df, use_container_width=True)
         asyncio.run(asyncio.sleep(refresh_rate))
 
-if __name__ == "__main__":
-    main()
+if st.button("🔄 Actualiser les prix"):
+    with st.spinner("Chargement des données..."):
+        data = asyncio.run(fetch_all())
+        df = pd.DataFrame(data)
+
+        if not df.empty and "Spread Max (%)" in df.columns:
+            df = df.sort_values("Spread Max (%)", ascending=False)
+
+        st.dataframe(df, use_container_width=True)
