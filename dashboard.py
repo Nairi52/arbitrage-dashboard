@@ -138,5 +138,3 @@ if st.button("🔄 Actualiser les prix"):
         st.dataframe(df, use_container_width=True)
 else:
     st.info("Clique sur le bouton pour scanner les plateformes.")
-    
-        st.dataframe(df, use_container_width=True)
