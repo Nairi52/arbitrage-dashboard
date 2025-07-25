@@ -106,7 +106,7 @@ def main():
         placeholder.dataframe(df, use_container_width=True)
         asyncio.run(asyncio.sleep(refresh_rate))
         # Récupère les prix sur toutes les plateformes pour chaque paire
-async def fetch_all():
+async def fetch_all(min_spread):
     results = []
     async with aiohttp.ClientSession() as session:
         for i, base in enumerate(STABLECOINS):
