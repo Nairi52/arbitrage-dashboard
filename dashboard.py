@@ -72,7 +72,7 @@ def main():
     while True:
         data = asyncio.run(fetch_arbitrage_data())
         df = pd.DataFrame(data)
-        df = df.sort_values("Spread (%)", ascending=False)
+      df = df.sort_values("Spread Max (%)", ascending=False)
         placeholder.dataframe(df, use_container_width=True)
         asyncio.run(asyncio.sleep(refresh_rate))
 
