@@ -69,6 +69,7 @@ def main():
 
     while True:
         data = asyncio.run(fetch_arbitrage_data())
+        st.write("📦 Données brutes :", data)
         df = pd.DataFrame(data)
 
         if not df.empty and "Spread (%)" in df.columns:
