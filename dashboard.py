@@ -13,7 +13,6 @@ TOKEN_MINTS = {
     "USDT": "Es9vMFrzaCERk8F3nWjrmA7z4S2k7GFHPiDTbvu9K5bD",
     "DAI": "DAwBSgGZDTFzyxAqzJp9SLwz1gdEDhnno2nZyzVSV7Ez",
     "UXD": "7kbnvuGBxxj8AG9qp8Scn56muWGaRaFqxg1FsRp3PaFT",
-    "USDL": "5vfjkX5jGsdYVYcWy6HRgUxhN6hzXZGTmA8qcRfXhCz7"
 }
 # --- Protection par mot de passe ---
 mot_de_passe = st.text_input("🔐 Entrez le mot de passe :", type="password")
