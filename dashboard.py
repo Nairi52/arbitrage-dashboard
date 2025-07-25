@@ -38,8 +38,8 @@ TOKEN_MINTS = {
 
 JUPITER_API_URL = "https://quote-api.jup.ag/v6/quote"
 
-async def get_price(session, token_in, token_out, amount=1_000_000)if token_out not in TOKEN_MINTS or token_in not in TOKEN_MINTS:
-    return None:
+async def get_price(session, token_in, token_out, amount=1_000_000):if token_out not in TOKEN_MINTS or token_in not in TOKEN_MINTS:
+    return None
  params = {
         "inputMint": TOKEN_MINTS[token_in],
         "outputMint": TOKEN_MINTS[token_out],
