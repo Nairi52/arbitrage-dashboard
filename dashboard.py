@@ -28,37 +28,37 @@ JUPITER_API_URL = "https://quote-api.jup.ag/v6/quote"
 # FUNCTIONS
 # --------------------------
 async def get_price(session, input_token, output_token, platform=None):
-    # 1) Sécurité sur les mint addresses
+    # 1) Sécurité sur les mints
     if input_token not in TOKEN_MINTS or output_token not in TOKEN_MINTS:
         return None
 
-    # 2) Paramètres de base (on laisse Jupiter router librement)
+    # 2) Paramètres de base, on force toujours le multi-hop
     params = {
-        "inputMint":   TOKEN_MINTS[input_token],
-        "outputMint":  TOKEN_MINTS[output_token],
-        "amount":      1_000_000,
-        "slippageBps": 10,
+        "inputMint":       TOKEN_MINTS[input_token],
+        "outputMint":      TOKEN_MINTS[output_token],
+        "amount":          1_000_000,
+        "slippageBps":     10,
+        "onlyDirectRoutes": False,   # ← FORCER le multi-hop systématiquement
     }
 
-    # 3) Si on filtre par plateforme (Raydium, Orca, etc.)
+    # 3) Si on cible une plateforme précise, on ajoute le filtre
     if platform and platform != "Jupiter":
-        params["onlyDirectRoutes"] = True
-        params["platforms"]        = [platform.lower()]
+        params["platforms"] = [platform.lower()]
 
-    # 4) Envoi de la requête + logs pour debug
+    # 4) Envoi de la requête + logs
     try:
         async with session.get(JUPITER_API_URL, params=params) as resp:
             st.write("🔗 Requête Jupiter :", params)
-            st.write("📶 Statut HTTP:", resp.status)
+            st.write("📶 Statut HTTP :", resp.status)
             body = await resp.text()
-            st.write("📦 Corps (trunc)    :", body[:200])
+            st.write("📦 Corps (trunc)  :", body[:200])
 
             if resp.status == 200:
                 data = await resp.json()
                 if data.get("data"):
                     out = int(data["data"][0]["outAmount"])
                     return round(out / 1_000_000, 6)
-    except:
+    except Exception:
         return None
 
     return None
