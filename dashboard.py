@@ -28,22 +28,24 @@ JUPITER_API_URL = "https://quote-api.jup.ag/v6/quote"
 # FUNCTIONS
 # --------------------------
 async def get_price(session, input_token, output_token, platform=None):
+    # 1) Sécurité sur les mint addresses
     if input_token not in TOKEN_MINTS or output_token not in TOKEN_MINTS:
         return None
 
-    # Prépare les paramètres : on force toujours multi-hop
+    # 2) Paramètres de base (on laisse Jupiter router librement)
     params = {
-        "inputMint":       TOKEN_MINTS[input_token],
-        "outputMint":      TOKEN_MINTS[output_token],
-        "amount":          1_000_000,
-        "slippageBps":     10,
-        "onlyDirectRoutes": False,       # ← ici on force multi-hop
+        "inputMint":   TOKEN_MINTS[input_token],
+        "outputMint":  TOKEN_MINTS[output_token],
+        "amount":      1_000_000,
+        "slippageBps": 10,
     }
 
-    # Si tu veux tester une plateforme en particulier (Raydium, Orca…)
+    # 3) Si on filtre par plateforme (Raydium, Orca, etc.)
     if platform and platform != "Jupiter":
-        params["platforms"] = [platform.lower()]
+        params["onlyDirectRoutes"] = True
+        params["platforms"]        = [platform.lower()]
 
+    # 4) Envoi de la requête + logs pour debug
     try:
         async with session.get(JUPITER_API_URL, params=params) as resp:
             st.write("🔗 Requête Jupiter :", params)
@@ -54,8 +56,8 @@ async def get_price(session, input_token, output_token, platform=None):
             if resp.status == 200:
                 data = await resp.json()
                 if data.get("data"):
-                    out_amount = int(data["data"][0]["outAmount"])
-                    return round(out_amount / 1_000_000, 6)
+                    out = int(data["data"][0]["outAmount"])
+                    return round(out / 1_000_000, 6)
     except:
         return None
 
