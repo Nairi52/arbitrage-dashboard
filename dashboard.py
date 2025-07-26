@@ -20,6 +20,7 @@ TOKEN_MINTS = {
     "USDL": "5vfjkX5jGsdYVYcWy6HRgUxhN6hzXZGTmA8qcRfXhCz7"
 }
 
+# en haut du fichier, tu as :
 JUPITER_API = "https://quote-api.jup.ag/v6/quote"
 
 # --------------------------
@@ -42,7 +43,7 @@ async def get_price(session, token_in: str, token_out: str) -> float | None:
     st.write("🔗 Requête brute Jupiter :", params)
 
     try:
-        async with session.get(JUPITER_API_URL, params=params) as resp:
+        async with session.get(JUPITER_API, params=params) as resp:
             st.write("📶 HTTP statut :", resp.status)
             body = await resp.text()
             st.write("📦 Corps (trunc)     :", body[:200])
