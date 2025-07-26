@@ -78,8 +78,8 @@ async def fetch_all(min_spread):
                     row[plat] = price
                     if isinstance(price, float):
                         prices.append(price)
-                # debug raw row
-                # compute spread
+
+                # On calcule le spread même si une seule cotation
                 if prices:
                     spread = (max(prices) - min(prices)) / min(prices) * 100
                     row["Spread Max (%)"] = round(spread, 4)
