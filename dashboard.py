@@ -25,39 +25,36 @@ JUPITER_API = "https://quote-api.jup.ag/v6/quote"
 # --------------------------
 # FETCH ONE PRICE
 # --------------------------
-async def get_price(session, token_in: str, token_out: str, dex: str|None=None) -> float|None:
-    # verify tokens
+async def get_price(session, token_in: str, token_out: str) -> float | None:
+    # Vérifie la présence du mint
     if token_in not in TOKEN_MINTS or token_out not in TOKEN_MINTS:
         return None
 
-    # build params
+    # Seuls ces 4 paramètres : pas de filtres de DEX, pas de onlyDirectRoutes
     params = {
-        "inputMint":        TOKEN_MINTS[token_in],
-        "outputMint":       TOKEN_MINTS[token_out],
-        "amount":           1_000_000,
-        "slippageBps":      10,
-        "onlyDirectRoutes": "false",      # string, to allow multi-hop
+        "inputMint":   TOKEN_MINTS[token_in],
+        "outputMint":  TOKEN_MINTS[token_out],
+        "amount":      1_000_000,
+        "slippageBps": 10,
     }
-    if dex and dex != "Jupiter":
-        params["onlyDirectRoutes"] = "true"   # direct only for this DEX
-        params["dexes"]            = [dex.lower()]
 
-    # DEBUG logs
-    st.write("🔗 REQUEST:", params)
+    # Log pour debugger
+    st.write("🔗 Requête brute Jupiter :", params)
+
     try:
-        async with session.get(JUPITER_API, params=params) as resp:
-            st.write("📶 STATUS:", resp.status)
-            text = await resp.text()
-            st.write("📦 BODY (trunc):", text[:300])
+        async with session.get(JUPITER_API_URL, params=params) as resp:
+            st.write("📶 HTTP statut :", resp.status)
+            body = await resp.text()
+            st.write("📦 Corps (trunc)     :", body[:200])
 
             if resp.status == 200:
                 data = await resp.json()
-                arr  = data.get("data", [])
+                arr = data.get("data", [])
                 if arr:
-                    out = int(arr[0]["outAmount"])
-                    return round(out/1_000_000, 6)
+                    return round(int(arr[0]["outAmount"]) / 1_000_000, 6)
     except Exception as e:
-        st.write("❌ fetch error:", e)
+        st.write("❌ Erreur get_price():", e)
+
     return None
 
 # --------------------------
@@ -68,21 +65,15 @@ async def fetch_all(min_spread: float):
     async with aiohttp.ClientSession() as session:
         for i, base in enumerate(STABLECOINS):
             for quote in STABLECOINS[i+1:]:
-                row    = {"Paire": f"{base}/{quote}"}
-                prices = []
+                row = {"Paire": f"{base}/{quote}"}
+                price = await get_price(session, base, quote)
+                row["Jupiter"] = price
 
-                for dex in DEXES:
-                    # "Jupiter" = global multi-hop
-                    actual = None if dex=="Jupiter" else dex
-                    price  = await get_price(session, base, quote, actual)
-                    row[dex] = price
-                    if isinstance(price, float):
-                        prices.append(price)
+                # Si on a un prix, on calcule un spread "zéro" (juste pour affichage)
+                if isinstance(price, float):
+                    row["Spread Max (%)"] = 0.0
+                    row["💸 Arbitrage"]   = "✅" if 0.0 >= min_spread else ""
 
-                if prices:
-                    spread = (max(prices)-min(prices))/min(prices)*100
-                    row["Spread Max (%)"] = round(spread, 4)
-                    row["💸 Arbitrage"]   = "✅" if spread>=min_spread else ""
                 results.append(row)
     return results
 
