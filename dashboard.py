@@ -28,24 +28,24 @@ JUPITER_API_URL = "https://quote-api.jup.ag/v6/quote"
 # FUNCTIONS
 # --------------------------
 async def get_price(session, input_token, output_token, platform=None):
-    # 1) Sécurité sur les mints
+    # 1) Sécurité : vérifie que tu as bien les mint-addresses
     if input_token not in TOKEN_MINTS or output_token not in TOKEN_MINTS:
         return None
 
-    # 2) Paramètres de base, on force toujours le multi-hop
+    # 2) Paramètres de base : on force le multi-hop toujours
     params = {
         "inputMint":       TOKEN_MINTS[input_token],
         "outputMint":      TOKEN_MINTS[output_token],
         "amount":          1_000_000,
         "slippageBps":     10,
-        "onlyDirectRoutes": False,   # ← FORCER le multi-hop systématiquement
+        "onlyDirectRoutes": False,       # ← **TOUJOURS** multi-hop
     }
 
-    # 3) Si on cible une plateforme précise, on ajoute le filtre
+    # 3) Si tu veux cibler une AMM précise (Raydium, Orca, etc.), ajoute le filtre :
     if platform and platform != "Jupiter":
         params["platforms"] = [platform.lower()]
 
-    # 4) Envoi de la requête + logs
+    # 4) Appel à l’API et logs pour debug
     try:
         async with session.get(JUPITER_API_URL, params=params) as resp:
             st.write("🔗 Requête Jupiter :", params)
