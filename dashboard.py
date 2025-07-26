@@ -2,6 +2,12 @@ import streamlit as st
 import pandas as pd
 import aiohttp
 import asyncio
+# ——— DEBUG : test d'une seule paire
+async def test_one():
+    async with aiohttp.ClientSession() as session:
+        return await get_price(session, "USDC", "USDT", "Jupiter")
+
+st.write("💡 Test USDC→USDT Jupiter:", asyncio.run(test_one()))
 
 # --------------------------
 # CONFIG
