@@ -73,19 +73,14 @@ async def fetch_all(min_spread):
             for quote in STABLECOINS[i+1:]:
                 row = {"Paire": f"{base}/{quote}"}
                 prices = []
-                    for plat in PLATFORMS:
-        # Si c'est "Jupiter", on passe None pour autoriser multi-hops
-        actual_platform = None if plat == "Jupiter" else plat
-        price = await get_price(session, base, quote, actual_platform)
-        row[plat] = price
+                for plat in PLATFORMS:
+                    # ← ici, ligne ~65–70 selon ton fichier
+                    actual_platform = None if plat == "Jupiter" else plat
+                    price = await get_price(session, base, quote, actual_platform)
+                    row[plat] = price
                     if isinstance(price, float):
                         prices.append(price)
-
-                # On calcule le spread même si une seule cotation
-                if prices:
-                    spread = (max(prices) - min(prices)) / min(prices) * 100
-                    row["Spread Max (%)"] = round(spread, 4)
-                    row["💸 Arbitrage"] = "✅" if spread >= min_spread else ""
+                # … le reste de ta logique …
                 results.append(row)
     return results
 
