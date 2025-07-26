@@ -28,40 +28,35 @@ JUPITER_API_URL = "https://quote-api.jup.ag/v6/quote"
 # FUNCTIONS
 # --------------------------
 async def get_price(session, input_token, output_token, platform=None):
-    # Vérifie que les tokens existent
     if input_token not in TOKEN_MINTS or output_token not in TOKEN_MINTS:
         return None
 
-    # Prépare les paramètres de la requête Jupiter
+    # Prépare les paramètres : on force toujours multi-hop
     params = {
-        "inputMint":  TOKEN_MINTS[input_token],
-        "outputMint": TOKEN_MINTS[output_token],
-        "amount":     1_000_000,
-        "slippageBps": 10,
+        "inputMint":       TOKEN_MINTS[input_token],
+        "outputMint":      TOKEN_MINTS[output_token],
+        "amount":          1_000_000,
+        "slippageBps":     10,
+        "onlyDirectRoutes": False,       # ← ici on force multi-hop
     }
 
-    # Si on cible une plateforme spécifique (pas "Jupiter"), indique-la dans une liste
+    # Si tu veux tester une plateforme en particulier (Raydium, Orca…)
     if platform and platform != "Jupiter":
-        params["onlyDirectRoutes"] = False
-        params["platforms"]       = [platform.lower()]
+        params["platforms"] = [platform.lower()]
 
-    # Appel à l'API avec logs pour debug
     try:
         async with session.get(JUPITER_API_URL, params=params) as resp:
-            # ——— LOGS HTTP ———
-            st.write(f"🔗 Requête vers Jupiter ({platform}):", params)
+            st.write("🔗 Requête Jupiter :", params)
             st.write("📶 Statut HTTP:", resp.status)
             body = await resp.text()
-            st.write("📦 Corps de la réponse (trunc):", body[:300])
-            # —————————————
+            st.write("📦 Corps (trunc)    :", body[:200])
 
             if resp.status == 200:
                 data = await resp.json()
-                if "data" in data and len(data["data"]) > 0:
+                if data.get("data"):
                     out_amount = int(data["data"][0]["outAmount"])
                     return round(out_amount / 1_000_000, 6)
-    except Exception:
-        # En cas d'erreur réseau ou JSON invalide
+    except:
         return None
 
     return None
