@@ -24,35 +24,33 @@ JUPITER_API_URL = "https://quote-api.jup.ag/v6/quote"
 # --------------------------
 # FONCTION DE PRIX
 # --------------------------
-async def get_price(session, token_in: str, token_out: str) -> float | None:
+async def get_price(session, token_in, token_out) -> float | None:
     if token_in not in TOKEN_MINTS or token_out not in TOKEN_MINTS:
         return None
 
+    # 1) Paramètres de base, on force multi-hop
     params = {
         "inputMint":        TOKEN_MINTS[token_in],
         "outputMint":       TOKEN_MINTS[token_out],
-        "amount":           1_000_000,   # 1 token en micro-unit
+        "amount":           1_000_000,
         "slippageBps":      10,
-        "onlyDirectRoutes": False        # ← multi-hop systématique
+        "onlyDirectRoutes": "false",      # << clé !!!
     }
 
-    try:
-        async with session.get(JUPITER_API_URL, params=params) as resp:
-            # logs pour debug (tu peux retirer après)
-            st.write("🔗 Requête Jupiter :", params)
-            st.write("📶 Statut HTTP       :", resp.status)
-            body = await resp.text()
-            st.write("📦 Corps (trunc)     :", body[:200])
+    # 2) (Optionnel) Filtrer par AMM direct
+    # if want_direct_pool:
+    #     params["onlyDirectRoutes"] = "true"
+    #     params["platforms"]        = ["raydium"]  # example
 
-            if resp.status == 200:
-                data = await resp.json()
-                arr = data.get("data", [])
-                if arr:
-                    out_amount = int(arr[0]["outAmount"])
-                    return round(out_amount / 1_000_000, 6)
-    except Exception as e:
-        st.write("❌ Erreur get_price():", e)
-        return None
+    # 3) Requête
+    async with session.get(JUPITER_API_URL, params=params) as resp:
+        # debug logs…
+        if resp.status == 200:
+            data = await resp.json()
+            arr = data.get("data", [])
+            if arr:
+                return round(int(arr[0]["outAmount"]) / 1_000_000, 6)
+    return None
 
     return None
 
