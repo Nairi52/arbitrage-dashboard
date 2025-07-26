@@ -6,14 +6,11 @@ import asyncio
 # --------------------------
 # CONFIG
 # --------------------------
-st.set_page_config(page_title="Arbitrage Multi-Plateforme", layout="wide")
+st.set_page_config(page_title="Arbitrage Multi-Platform", layout="wide")
 st.title("📊 Arbitrage Stablecoins - Solana (Jupiter Multi-Platform)")
 
-# Tokens and platforms
 STABLECOINS = ["USDC", "USDT", "DAI", "UXD", "USDL"]
-PLATFORMS   = ["Jupiter", "Raydium", "Orca", "Lifinity", "Meteora"]
 
-# Mint addresses
 TOKEN_MINTS = {
     "USDC": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
     "USDT": "Es9vMFrzaCERk8F3nWjrmA7z4S2k7GFHPiDTbvu9K5bD",
@@ -25,59 +22,62 @@ TOKEN_MINTS = {
 JUPITER_API_URL = "https://quote-api.jup.ag/v6/quote"
 
 # --------------------------
-# FUNCTIONS
+# FONCTION DE PRIX
 # --------------------------
-async def get_price(session, input_token, output_token, platform=None):
-    # 1) Sécurité : vérifie que tu as bien les mint-addresses
-    if input_token not in TOKEN_MINTS or output_token not in TOKEN_MINTS:
+async def get_price(session, token_in: str, token_out: str) -> float | None:
+    if token_in not in TOKEN_MINTS or token_out not in TOKEN_MINTS:
         return None
 
-    # 2) Paramètres de base : on force le multi-hop toujours
     params = {
-        "inputMint":       TOKEN_MINTS[input_token],
-        "outputMint":      TOKEN_MINTS[output_token],
-        "amount":          1_000_000,
-        "slippageBps":     10,
-        "onlyDirectRoutes": False,       # ← **TOUJOURS** multi-hop
+        "inputMint":        TOKEN_MINTS[token_in],
+        "outputMint":       TOKEN_MINTS[token_out],
+        "amount":           1_000_000,   # 1 token en micro-unit
+        "slippageBps":      10,
+        "onlyDirectRoutes": False        # ← multi-hop systématique
     }
 
-    # 3) Si tu veux cibler une AMM précise (Raydium, Orca, etc.), ajoute le filtre :
-    if platform and platform != "Jupiter":
-        params["platforms"] = [platform.lower()]
-
-    # 4) Appel à l’API et logs pour debug
     try:
         async with session.get(JUPITER_API_URL, params=params) as resp:
+            # logs pour debug (tu peux retirer après)
             st.write("🔗 Requête Jupiter :", params)
-            st.write("📶 Statut HTTP :", resp.status)
+            st.write("📶 Statut HTTP       :", resp.status)
             body = await resp.text()
-            st.write("📦 Corps (trunc)  :", body[:200])
+            st.write("📦 Corps (trunc)     :", body[:200])
 
             if resp.status == 200:
                 data = await resp.json()
-                if data.get("data"):
-                    out = int(data["data"][0]["outAmount"])
-                    return round(out / 1_000_000, 6)
-    except Exception:
+                arr = data.get("data", [])
+                if arr:
+                    out_amount = int(arr[0]["outAmount"])
+                    return round(out_amount / 1_000_000, 6)
+    except Exception as e:
+        st.write("❌ Erreur get_price():", e)
         return None
 
     return None
 
-async def fetch_all(min_spread):
+# --------------------------
+# FONCTION COLLECTE DES PRIX
+# --------------------------
+async def fetch_all(min_spread: float):
     results = []
     async with aiohttp.ClientSession() as session:
         for i, base in enumerate(STABLECOINS):
             for quote in STABLECOINS[i+1:]:
                 row = {"Paire": f"{base}/{quote}"}
                 prices = []
-                for plat in PLATFORMS:
-                    # ← ici, ligne ~65–70 selon ton fichier
-                    actual_platform = None if plat == "Jupiter" else plat
-                    price = await get_price(session, base, quote, actual_platform)
-                    row[plat] = price
-                    if isinstance(price, float):
-                        prices.append(price)
-                # … le reste de ta logique …
+
+                # collecte sur Jupiter global multi-hop
+                price = await get_price(session, base, quote)
+                row["Jupiter"] = price
+                if isinstance(price, float):
+                    prices.append(price)
+
+                # calcul du spread max et flag arbitrage
+                if prices:
+                    spread = (max(prices) - min(prices)) / min(prices) * 100
+                    row["Spread Max (%)"] = round(spread, 4)
+                    row["💸 Arbitrage"] = "✅" if spread >= min_spread else ""
                 results.append(row)
     return results
 
@@ -90,9 +90,10 @@ if st.button("🔄 Actualiser les prix"):
     with st.spinner("Chargement des données..."):
         data = asyncio.run(fetch_all(min_spread))
         st.write("📦 Données brutes (fetch_all) :", data)
+
         df = pd.DataFrame(data)
         if not df.empty and "Spread Max (%)" in df.columns:
             df = df.sort_values("Spread Max (%)", ascending=False)
         st.dataframe(df, use_container_width=True)
 else:
-    st.info("Clique sur le bouton pour scanner les plateformes.")
+    st.info("Clique sur le bouton pour scanner les paires.")
