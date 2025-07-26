@@ -56,17 +56,14 @@ async def get_price(session, token_in: str, token_out: str) -> float | None:
 # --------------------------
 # fetch_all : boucle sur toutes les paires
 # --------------------------
-async def fetch_all():
-    rows = []
+sync def fetch_all():
+    results = []
     async with aiohttp.ClientSession() as session:
         for i, base in enumerate(STABLECOINS):
             for quote in STABLECOINS[i+1:]:
                 price = await get_price(session, base, quote)
-                rows.append({
-                    "Paire":        f"{base}/{quote}",
-                    "Jupiter":      price
-                })
-    return rows
+                results.append({"Paire": f"{base}/{quote}", "Jupiter": price})
+    return results
 
 # --------------------------
 # UI
