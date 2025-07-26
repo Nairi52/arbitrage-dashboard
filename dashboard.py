@@ -40,6 +40,7 @@ TOKEN_MINTS = {
 JUPITER_API_URL = "https://quote-api.jup.ag/v6/quote"
 
 async def get_price(session, input_token, output_token, platform=None):
+    # Sécurité sur les mints
     if input_token not in TOKEN_MINTS or output_token not in TOKEN_MINTS:
         return None
 
@@ -50,9 +51,26 @@ async def get_price(session, input_token, output_token, platform=None):
         "slippageBps": 10
     }
 
+    # Filtrer par plateforme (en liste !)
     if platform and platform != "Jupiter":
-        params["onlyDirectRoutes"] = False  # ✅ accepte les routes indirectes (multi-hops)
-        params["platforms"] = platform.lower()  # raydium, orca, etc.
+        params["onlyDirectRoutes"] = False
+        params["platforms"]       = [platform.lower()]
+
+    try:
+        async with session.get(JUPITER_API, params=params) as resp:
+            if resp.status == 200:
+                data = await resp.json()
+                if "data" in data and len(data["data"]) > 0:
+                    out_amount = int(data["data"][0]["outAmount"])
+                    # input = 1_000_000 micro-units → 1 token, donc out_amount/1e6 = prix
+                    return round(out_amount / 1_000_000, 6)
+    except:
+        pass
+
+    return None
+   if platform and platform != "Jupiter":
+    params["onlyDirectRoutes"] = False
+    params["platforms"] = [platform.lower()]  # ← LISTE de strings → OK
 
     try:
         async with session.get(JUPITER_API, params=params) as resp:
