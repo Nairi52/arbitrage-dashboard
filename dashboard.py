@@ -130,12 +130,16 @@ min_spread = st.slider("📊 Spread minimum affiché (%)", 0.01, 2.0, 0.2)
 # Bouton d’actualisation
 if st.button("🔄 Actualiser les prix"):
     with st.spinner("Chargement des données..."):
+        # ① on récupère les données
         data = asyncio.run(fetch_all(min_spread))
-        df = pd.DataFrame(data)
 
+        # ② on affiche ce qu'on a reçu avant de transformer en DataFrame
+        st.write("📦 Données brutes (fetch_all) :", data)
+
+        # ③ on crée le DataFrame et on trie
+        df = pd.DataFrame(data)
         if not df.empty and "Spread Max (%)" in df.columns:
             df = df.sort_values("Spread Max (%)", ascending=False)
-
         st.dataframe(df, use_container_width=True)
 else:
     st.info("Clique sur le bouton pour scanner les plateformes.")
