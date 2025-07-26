@@ -34,30 +34,42 @@ JUPITER_API_URL = "https://quote-api.jup.ag/v6/quote"
 # FUNCTIONS
 # --------------------------
 async def get_price(session, input_token, output_token, platform=None):
+    # Vérifie que les tokens existent
     if input_token not in TOKEN_MINTS or output_token not in TOKEN_MINTS:
         return None
+
+    # Prépare les paramètres de la requête Jupiter
     params = {
-        "inputMint": TOKEN_MINTS[input_token],
+        "inputMint":  TOKEN_MINTS[input_token],
         "outputMint": TOKEN_MINTS[output_token],
-        "amount": 1_000_000,
-        "slippageBps": 10
+        "amount":     1_000_000,
+        "slippageBps": 10,
     }
+
+    # Si on cible une plateforme spécifique (pas "Jupiter"), indique-la dans une liste
     if platform and platform != "Jupiter":
         params["onlyDirectRoutes"] = False
         params["platforms"]       = [platform.lower()]
+
+    # Appel à l'API avec logs pour debug
     try:
         async with session.get(JUPITER_API_URL, params=params) as resp:
-             st.write(f"🔗 Requête vers Jupiter ({platform}):", params)
-        st.write("📶 Statut HTTP:", resp.status)
-        text = await resp.text()
-        st.write("📦 Corps de la réponse (trunc):", text[:300])
+            # ——— LOGS HTTP ———
+            st.write(f"🔗 Requête vers Jupiter ({platform}):", params)
+            st.write("📶 Statut HTTP:", resp.status)
+            body = await resp.text()
+            st.write("📦 Corps de la réponse (trunc):", body[:300])
+            # —————————————
+
             if resp.status == 200:
                 data = await resp.json()
                 if "data" in data and len(data["data"]) > 0:
                     out_amount = int(data["data"][0]["outAmount"])
                     return round(out_amount / 1_000_000, 6)
     except Exception:
+        # En cas d'erreur réseau ou JSON invalide
         return None
+
     return None
 
 async def fetch_all(min_spread):
