@@ -40,10 +40,11 @@ TOKEN_MINTS = {
 JUPITER_API_URL = "https://quote-api.jup.ag/v6/quote"
 
 async def get_price(session, input_token, output_token, platform=None):
-    # Sécurité sur les mints
+    # Vérifie d’abord que le token existe dans ton mapping
     if input_token not in TOKEN_MINTS or output_token not in TOKEN_MINTS:
         return None
 
+    # Prépare les paramètres de la requête Jupiter
     params = {
         "inputMint": TOKEN_MINTS[input_token],
         "outputMint": TOKEN_MINTS[output_token],
@@ -51,6 +52,24 @@ async def get_price(session, input_token, output_token, platform=None):
         "slippageBps": 10
     }
 
+    # Si on cible une plateforme spécifique (pas "Jupiter"), indique-la dans une liste
+    if platform and platform != "Jupiter":
+        params["onlyDirectRoutes"] = False
+        params["platforms"]       = [platform.lower()]
+
+    # Appel à l’API
+    try:
+        async with session.get(JUPITER_API, params=params) as resp:
+            if resp.status == 200:
+                data = await resp.json()
+                if "data" in data and len(data["data"]) > 0:
+                    out_amount = int(data["data"][0]["outAmount"])
+                    # 1 _000_000 = 1 token en micro-unités, donc on divise par 1e6
+                    return round(out_amount / 1_000_000, 6)
+    except:
+        pass
+
+    return None
     # Filtrer par plateforme (en liste !)
     if platform and platform != "Jupiter":
         params["onlyDirectRoutes"] = False
