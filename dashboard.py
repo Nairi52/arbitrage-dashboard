@@ -41,6 +41,10 @@ async def get_price(session, input_token, output_token, platform=None):
         params["platforms"]       = [platform.lower()]
     try:
         async with session.get(JUPITER_API_URL, params=params) as resp:
+             st.write(f"🔗 Requête vers Jupiter ({platform}):", params)
+        st.write("📶 Statut HTTP:", resp.status)
+        text = await resp.text()
+        st.write("📦 Corps de la réponse (trunc):", text[:300])
             if resp.status == 200:
                 data = await resp.json()
                 if "data" in data and len(data["data"]) > 0:
