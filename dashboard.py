@@ -27,28 +27,30 @@ JUPITER_API_URL = "https://quote-api.jup.ag/v6/quote"
 # get_price : interroge Jupiter
 # --------------------------
 async def get_price(session, token_in: str, token_out: str) -> float | None:
+    # Sécurité
     if token_in not in TOKEN_MINTS or token_out not in TOKEN_MINTS:
         return None
 
+    # Params avec multi-hop forcé
     params = {
-        "inputMint":   TOKEN_MINTS[token_in],
-        "outputMint":  TOKEN_MINTS[token_out],
-        "amount":      1_000_000,  # 1 token = 1e6 micro-unités
-        "slippageBps": 10,
-        # ne pas passer de filtre, pour laisser Jupiter router multi-hop
+        "inputMint":        TOKEN_MINTS[token_in],
+        "outputMint":       TOKEN_MINTS[token_out],
+        "amount":           1_000_000,
+        "slippageBps":      10,
+        "onlyDirectRoutes": "false",    # ← string "false" OBLIGATOIRE
     }
 
-    try:
-        async with session.get(JUPITER_API_URL, params=params) as resp:
-            if resp.status == 200:
-                data = await resp.json()
-                arr  = data.get("data", [])
-                if arr:
-                    out_amount = int(arr[0]["outAmount"])
-                    return round(out_amount / 1_000_000, 6)
-    except:
-        return None
-
+    # Affiche les params et la réponse brute
+    st.write("🔗 PARAMS :", params)
+    async with session.get(JUPITER_API_URL, params=params) as resp:
+        text = await resp.text()
+        st.write("📶 STATUS :", resp.status)
+        st.write("📦 BODY   :", text[:500])  # montre les 500 premiers caractères
+        if resp.status == 200:
+            data = await resp.json()
+            arr  = data.get("data", [])
+            if arr:
+                return round(int(arr[0]["outAmount"]) / 1_000_000, 6)
     return None
 
 # --------------------------
