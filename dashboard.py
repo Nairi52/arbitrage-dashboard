@@ -68,6 +68,7 @@ async def get_price(session, input_token, output_token, platform=None):
         pass
 
     return None
+    
    if platform and platform != "Jupiter":
     params["onlyDirectRoutes"] = False
     params["platforms"] = [platform.lower()]  # ← LISTE de strings → OK
@@ -83,6 +84,7 @@ async def get_price(session, input_token, output_token, platform=None):
         pass
 
     return None
+       
     async with session.get(JUPITER_API_URL, params=params) as resp:
         if resp.status == 200:
             data = await resp.json()
