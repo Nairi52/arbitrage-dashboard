@@ -56,7 +56,7 @@ async def get_price(session, token_in: str, token_out: str) -> float | None:
 # --------------------------
 # fetch_all : boucle sur toutes les paires
 # --------------------------
-sync def fetch_all():
+async def fetch_all():
     results = []
     async with aiohttp.ClientSession() as session:
         for i, base in enumerate(STABLECOINS):
